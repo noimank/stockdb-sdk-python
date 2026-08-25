@@ -114,3 +114,10 @@ def test_lazy_singleton_reset(bi):
     assert lazy.get("801780.SL")["code"] == "801780.SL"
     lazy.reset()
     assert lazy._instance is None
+
+
+def test_lazy_proxy_signature_matches_board_index():
+    import inspect
+
+    # 两侧均含 self，直接整体比较
+    assert inspect.signature(_LazyBoardIndex.get) == inspect.signature(BoardIndex.get)

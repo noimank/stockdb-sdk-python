@@ -1,11 +1,12 @@
 """进程级默认端点：init 配置、惰性单例客户端与 rd 透传代理。"""
 
-from typing import Optional
+from typing import Any, Dict, List, Optional, Union
 
 from ._board import reset_default_connection as _reset_boards
 from ._board import warm_default_connection as _warm_boards
 from ._client import StockDBClient
 from ._connection import configure, get_default_raw_rd
+from ._raw import RdClient
 
 _default_client: Optional[StockDBClient] = None
 
@@ -29,7 +30,7 @@ def init(host: str = "127.0.0.1", port: int = 7899,
             使首次业务调用更快。
 
     Returns:
-        原生底层连接对象（:mod:`stockdb_sdk.stockdb` 的 rd）。
+        原生 K-V 客户端门面（:class:`stockdb_sdk.RdClient`）。
 
     Example::
 
@@ -46,7 +47,7 @@ def init(host: str = "127.0.0.1", port: int = 7899,
     _default_client = None  # 旧默认客户端不得继续持有旧端点
     if warm:
         warm_default_connection()
-    return raw
+    return RdClient(raw)
 
 
 def get_default_client() -> StockDBClient:
@@ -65,39 +66,52 @@ def warm_default_connection() -> StockDBClient:
     return client
 
 
-class _RdProxy:
-    """原生 rd 连接的惰性代理，始终指向当前默认服务端（纯透传，无高层方法）。"""
-
-    def __getattr__(self, name):
-        return getattr(get_default_raw_rd(), name)
-
-    def __setattr__(self, name, value):
-        if name.startswith("_"):
-            object.__setattr__(self, name, value)
-        else:
-            setattr(get_default_raw_rd(), name, value)
-
-    def __dir__(self):
-        return sorted(set(dir(get_default_raw_rd()) + dir(self.__class__)))
-
-    def __repr__(self):
-        return repr(get_default_raw_rd())
+# 惰性默认端点门面：每次调用解析当前端点，跟随 init() 切换
+rd = RdClient()
 
 
-rd = _RdProxy()
-
-
-def get_data(*args, **kwargs):
-    """查询 K 线数据（转发到默认客户端）。
+def get_data(
+    code: Union[str, List[str]],
+    start: Optional[str] = None,
+    end: Optional[str] = None,
+    frequency: str = "1d",
+    fields: Optional[Union[str, List[str]]] = None,
+    limit: Optional[int] = None,
+    desc: bool = False,
+    as_df: bool = False,
+    fq: Optional[str] = "qfq",
+) -> Union[List[Any], Dict[str, List[Any]], Any]:
+    """同步查询 K 线数据（默认端点，转发到 :class:`StockDBClient`）。
 
     参数与 :meth:`StockDBClient.get_data` 完全一致，详见其文档。
+
+    Example::
+
+        bars = sdk.get_data("000001", start="20260701", end="20260824")
     """
-    return get_default_client().get_data(*args, **kwargs)
+    return get_default_client().get_data(
+        code, start, end, frequency, fields, limit, desc, as_df, fq)
 
 
-async def get_data_async(*args, **kwargs):
-    """异步查询 K 线数据（转发到默认客户端）。
+async def get_data_async(
+    code: Union[str, List[str]],
+    start: Optional[str] = None,
+    end: Optional[str] = None,
+    frequency: str = "1d",
+    fields: Optional[Union[str, List[str]]] = None,
+    limit: Optional[int] = None,
+    desc: bool = False,
+    as_df: bool = False,
+    fq: Optional[str] = "qfq",
+) -> Union[List[Any], Dict[str, List[Any]], Any]:
+    """异步查询 K 线数据（默认端点，转发到 :class:`StockDBClient`）。
 
-    参数与 :meth:`StockDBClient.get_data_async` 完全一致，详见其文档。
+    参数与 :meth:`StockDBClient.get_data_async` 完全一致，需用 ``await``
+    调用，详见其文档。
+
+    Example::
+
+        bars = await sdk.get_data_async("000001", start="20260701", end="N")
     """
-    return await get_default_client().get_data_async(*args, **kwargs)
+    return await get_default_client().get_data_async(
+        code, start, end, frequency, fields, limit, desc, as_df, fq)

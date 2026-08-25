@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Union
 import pandas as pd
 
 from ._connection import _connect, _default_connection
+from ._raw import RdClient
 
 MINUTE_FREQUENCIES = ("1m", "5m", "15m", "30m", "60m")
 
@@ -331,7 +332,8 @@ class StockDBClient:
     操作，并支持在内存中合成周 K、月 K 及多分钟 K 线。
 
     Attributes:
-        rd: 底层原生连接对象，可直接调用其全部方法（如 ``rd.vals``、``rd.pipe``）。
+        rd: 原生 K-V 客户端门面（:class:`stockdb_sdk.RdClient`），带显式
+            签名与完整文档，可调用其全部方法。
     """
 
     def __init__(self, host: Optional[str] = None, port: Optional[int] = None,
@@ -366,9 +368,10 @@ class StockDBClient:
             socket_timeout = _default_connection["socket_timeout"]
 
         if _raw_client is not None:
-            self.rd = _raw_client
+            native = _raw_client
         else:
-            self.rd = _connect(host, port, socket_timeout, password)
+            native = _connect(host, port, socket_timeout, password)
+        self.rd = RdClient(native)
 
         # 一次性预加载全部复权因子到内存（LevelDB 天然有序，无需排序）
         self._fq_dates: Dict[str, List[str]] = {}   # {code: [date_str, ...]}

@@ -216,6 +216,15 @@ class _LazyBoardIndex:
             self._instance = BoardIndex()
         return self._instance
 
+    def get(
+        self,
+        x: Any = None,
+        category: int | str | None = None,
+        fields: str | None = None,
+    ) -> Any:
+        """查询板块，参数与 :meth:`BoardIndex.get` 完全一致，详见其文档。"""
+        return self._target().get(x, category, fields)
+
     def __getattr__(self, name):
         return getattr(self._target(), name)
 

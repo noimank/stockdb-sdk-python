@@ -3,6 +3,7 @@
 import pytest
 
 from stockdb_sdk._client import (
+    StockDBClient,
     _build_time_query,
     _filter_fields,
     _merge_minutes_to_period,
@@ -324,3 +325,20 @@ def test_client_weekly_via_get_data(make_client):
     # 聚合路径下 desc 在聚合后反转
     weekly_desc = client.get_data("600000", frequency="1w", fq=None, desc=True)
     assert weekly_desc[0]["date"] == 20260713
+
+
+# ---------- 模块级入口（显式签名锁定） ----------
+
+def test_module_level_signatures_match_client():
+    import inspect
+
+    import stockdb_sdk
+
+    for mod_fn, client_fn in (
+        (stockdb_sdk.get_data, StockDBClient.get_data),
+        (stockdb_sdk.get_data_async, StockDBClient.get_data_async),
+    ):
+        client_sig = inspect.signature(client_fn)
+        params = list(client_sig.parameters.values())[1:]  # 去掉 self
+        assert inspect.signature(mod_fn) == inspect.Signature(
+            params, return_annotation=client_sig.return_annotation)
