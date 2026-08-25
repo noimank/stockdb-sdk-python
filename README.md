@@ -1,6 +1,8 @@
 # StockDB Python SDK
 
-StockDB 股票数据库的官方 Python SDK，提供 K 线查询、板块（概念 / 申万行业）检索与技术指标计算能力，核心计算由原生二进制模块加速。
+针对 [free-stockdb](https://github.com/hello245m/free-stockdb) 项目的**第三方** Python SDK，提供 K 线查询、板块（概念 / 申万行业）检索与技术指标计算能力，核心计算由原生二进制模块加速。
+
+> ⚠️ **非官方项目**：本项目由社区开发者维护，与 [free-stockdb](https://github.com/hello245m/free-stockdb) 官方无隶属关系，亦非其官方 SDK。使用前请自行评估风险，相关问题请在本仓库提交 issue，而非上游项目。
 
 - **K 线查询**：日 K / 分钟 K / 周 K / 月 K，支持同步与异步、多股票批量、前/后复权、字段投影与 `pandas.DataFrame` 输出。
 - **板块检索**：概念板块、申万一/二/三级行业的按代码、名称、成分股查询。
@@ -28,23 +30,13 @@ StockDB 股票数据库的官方 Python SDK，提供 K 线查询、板块（概�
 
 ## 安装
 
-从 Gitea 包仓库安装（需要服务端已发布 wheel，详见下方“发布到 Gitea”）：
+从 PyPI 安装：
 
 ```bash
-pip install stockdb-sdk --index-url https://git.c2m.fun/api/packages/<org>/pypi/simple
+pip install stockdb-sdk
 ```
 
-本地直接安装构建出的 wheel：
-
-```bash
-pip install dist/stockdb_sdk-0.1.0-cp310-abi3-win_amd64.whl
-```
-
-如需使用 `as_df=True` 返回 DataFrame，请额外安装 pandas：
-
-```bash
-pip install stockdb-sdk[pandas]
-```
+`pandas` 为必装依赖，会随包自动安装。
 
 ---
 
@@ -208,7 +200,7 @@ df = sdk.get_data(["000001.SZ", "600000.SH"], start="20260101", as_df=True)
 
 ```bash
 # 安装构建工具
-pip install build wheel
+pip install build
 
 # 构建 wheel（产物在 dist/ 下，标签 cp310-abi3-win_amd64）
 python -m build --wheel
@@ -232,7 +224,7 @@ stockdb-sdk-python/
 │   └── freethreaded-3.14/    # Python 3.14 自由线程版二进制
 ├── examples/                 # 示例脚本
 ├── tests/                    # 测试
-├── .gitea/workflows/         # Gitea Actions 流水线
+├── .github/workflows/        # GitHub Actions 流水线
 ├── pyproject.toml            # 打包配置
 ├── setup.py                  # 自定义 wheel 命令（abi3 标签）
 └── README.md
@@ -240,16 +232,14 @@ stockdb-sdk-python/
 
 ---
 
-## 发布到 Gitea
+## 发布到 PyPI
 
-流水线会在推送 tag（`v*`）后自动构建 wheel 并发布到 Gitea 的 PyPI 包仓库。
-手动发布：
+流水线会在推送 tag（`v*`）后自动构建 wheel 并发布到 PyPI。手动发布：
 
 ```bash
 python -m build --wheel
 pip install twine
-# 使用 Gitea 生成的 token 作为密码
-twine upload --repository-url https://git.c2m.fun/api/packages/<org>/pypi dist/*
+twine upload dist/*
 ```
 
 ---

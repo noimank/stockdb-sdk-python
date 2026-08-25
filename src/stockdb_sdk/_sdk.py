@@ -4,6 +4,9 @@ import asyncio
 import datetime
 from typing import Union, List, Dict, Any, Optional
 from collections import defaultdict
+
+import pandas as pd
+
 from .stockdb import *
 _raw_rd=rd
 _native_init = init
@@ -185,12 +188,8 @@ class StockDBClient:
 
     def _to_dataframe(self, data: Any, is_batch: bool, fields: Optional[Union[str, List[str]]] = None) -> Any:
         """
-        将数据转换为 Pandas DataFrame。如果未安装 pandas，将抛出友好错误。
+        将数据转换为 Pandas DataFrame。pandas 为必装依赖，此处直接使用。
         """
-        try:
-            import pandas as pd
-        except ImportError:
-            raise ImportError("未检测到 pandas 库。如需使用 as_df=True，请先运行 'pip install pandas'。")
 
         # 预先处理 fields 为列表形式
         fields_list = []

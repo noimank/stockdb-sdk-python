@@ -1,6 +1,7 @@
 """StockDB Python SDK.
 
-StockDB 股票数据库的官方 Python SDK，提供：
+针对 free-stockdb（https://github.com/hello245m/free-stockdb）项目的第三方
+Python SDK，提供：
 
 * 统一的高层 ``get_data`` 接口：日 K / 分钟 K / 周 K / 月 K 查询，
   支持同步与异步、多股票批量、复权、字段投影与 DataFrame 输出。

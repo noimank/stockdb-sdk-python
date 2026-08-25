@@ -1,11 +1,11 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "stockdb-sdk"
 version = "0.1.0"
-description = "StockDB 股票数据库官方 Python SDK：K 线查询、板块检索与技术指标计算"
+description = "free-stockdb 项目的第三方 Python SDK：K 线查询、板块检索与技术指标计算"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Proprietary" }
@@ -25,14 +25,16 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Topic :: Office/Business :: Financial :: Investment",
 ]
-dependencies = []
+dependencies = [
+    "pandas>=1.3",
+]
 
 [project.optional-dependencies]
-pandas = ["pandas>=1.3"]
-dev = ["build", "wheel", "pytest"]
+dev = ["build", "wheel", "pytest", "twine"]
 
 [project.urls]
-Homepage = "https://git.c2m.fun/stockdb/stockdb-sdk-python"
+Homepage = "https://github.com/hello245m/free-stockdb"
+Source = "https://github.com/noimank/stockdb-sdk-python"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
