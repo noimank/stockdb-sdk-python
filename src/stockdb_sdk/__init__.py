@@ -33,7 +33,7 @@ from ._sdk import (
 )
 from ._zhibiao import bk, zb, jisuan, BoardIndex
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 __all__ = [
     "init",
