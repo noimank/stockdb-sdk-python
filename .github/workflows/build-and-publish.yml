@@ -46,7 +46,8 @@ jobs:
   publish:
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: windows-latest
+    # pypa/gh-action-pypi-publish 是 Docker 容器型 action，仅支持 Linux runner
+    runs-on: ubuntu-latest
     environment: pypi
     permissions:
       id-token: write
