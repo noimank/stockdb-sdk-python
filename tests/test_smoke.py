@@ -1,32 +1,24 @@
-"""包基础冒烟测试：验证公共 API 与原生模块可正常导入。"""
+"""包基础冒烟测试：公共 API 与原生模块可正常导入。"""
 
 import importlib
 
-import pytest
+import stockdb_sdk as sdk
 
 
 def test_version():
-    import stockdb_sdk as sdk
-
-    assert sdk.__version__
+    assert sdk.__version__ == "0.2.0"
 
 
 def test_public_api():
-    import stockdb_sdk as sdk
-
-    for name in [
-        "init",
-        "StockDBClient",
-        "BoardIndex",
-        "get_data",
-        "get_data_async",
-        "jisuan",
-        "gp",
-        "rd",
-        "bk",
-        "zb",
-    ]:
+    for name in sdk.__all__:
         assert hasattr(sdk, name), f"missing public API: {name}"
+
+
+def test_removed_legacy_entries():
+    # 0.2.0 移除的旧入口，防止意外回归
+    for name in ("gp", "zb", "jisuan", "zhishu", "get_default_client"):
+        assert not hasattr(sdk, name)
+    assert not hasattr(sdk.rd, "get_data")
 
 
 def test_native_modules_importable():
