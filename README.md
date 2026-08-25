@@ -24,7 +24,6 @@
 - [指数合成](#指数合成)
 - [板块检索](#板块检索)
 - [异步接口](#异步接口)
-- [从 0.1.x 迁移](#从-01x-迁移)
 - [开发与构建](#开发与构建)
 - [目录结构](#目录结构)
 - [许可证](#许可证)
@@ -226,20 +225,6 @@ bars = await client.get_data_async("000001", start="20260801", end="N")
 ```
 
 底层 `rd` 的方法同样原生支持同步与异步（`await rd.vals(...)`）。
-
----
-
-## 从 0.1.x 迁移
-
-| 0.1.x | 0.2.0 |
-|---|---|
-| `sdk.get_data(...)` / `sdk.get_data_async(...)` | 不变 |
-| `sdk.jisuan("macd", ...)` | `sdk.indicator("macd", ...)` |
-| `sdk.jisuan("zhishu", codes, method=..., base=...)` | `sdk.index(codes, method=..., base=...)` |
-| `sdk.zb.get(...)`、`sdk.zb.MACD(...)` | `sdk.indicator(...)`、`sdk.zb_core.MACD(...)` |
-| `sdk.gp.get_data(...)`、`sdk.rd.get_data(...)` | `sdk.get_data(...)` |
-| `sdk.get_default_client()` | `sdk.StockDBClient()` |
-| 代码 `"000001.SZ"` | 仍可用（自动归一化为 `"000001"`） |
 
 ---
 

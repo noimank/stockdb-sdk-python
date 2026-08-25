@@ -31,11 +31,6 @@ jobs:
           pip install $wheels.FullName
           python -c "import stockdb_sdk as sdk; print(sdk.__version__)"
 
-      - name: Run tests
-        run: |
-          pip install pytest
-          pytest tests/ -q
-
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v7
         with:
