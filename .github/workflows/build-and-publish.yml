@@ -11,10 +11,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -25,8 +25,10 @@ jobs:
         run: python -m build --wheel
 
       - name: Smoke test (import)
+        shell: pwsh
         run: |
-          pip install dist/*.whl
+          $wheels = Get-ChildItem dist\*.whl
+          pip install $wheels.FullName
           python -c "import stockdb_sdk as sdk; print(sdk.__version__)"
 
       - name: Run tests
@@ -35,20 +37,22 @@ jobs:
           pytest tests/ -q
 
       - name: Upload wheel artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wheel
           path: dist/*.whl
+          if-no-files-found: error
 
   publish:
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: windows-latest
+    environment: pypi
     permissions:
       id-token: write
     steps:
       - name: Download wheel artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: wheel
           path: dist
