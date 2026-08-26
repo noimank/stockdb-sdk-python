@@ -6,6 +6,12 @@
 
 聚合行固定包含 ``code/date/open/high/low/close/pre_close/pct_chg/volume/amount``
 （有名称时附 ``name``），其余字段（估值、换手等）不具跨周期可加性，不输出。
+
+服务端分钟表对停牌日会写入占位 bar，实测两种形态：OHLC 全为
+``None``、或全为 ``0``（volume=0、pre_close=None）。A 股价格恒为正，
+两种形态都没有可聚合的价格，聚合前一律丢弃——某桶因此为空时整桶
+不输出，而不是产出 None/0 价格的合并行（``max()`` 空序列崩溃 /
+下游 ``price > 0`` 校验拒收）。
 """
 
 import datetime as _dt
@@ -38,17 +44,30 @@ def _from_traded(index: int) -> int:
     return start + offset
 
 
+def _usable(value: Any) -> bool:
+    """价格可用：非 None 且 > 0（0 与 None 一样是停牌占位）。"""
+    return value is not None and value > 0
+
+
+def _priced(r: Dict[str, Any]) -> bool:
+    """行内至少有一个可用价格（停牌占位 bar 的 OHLC 全为 None 或全为 0）。"""
+    return any(_usable(r.get(f)) for f in ("open", "high", "low", "close"))
+
+
 def _merge(rows: List[Dict[str, Any]], date: int,
            prev_close: Optional[float]) -> Dict[str, Any]:
-    first, last = rows[0], rows[-1]
+    opens = [r["open"] for r in rows if _usable(r.get("open"))]
+    closes = [r["close"] for r in rows if _usable(r.get("close"))]
+    highs = [r["high"] for r in rows if _usable(r.get("high"))]
+    lows = [r["low"] for r in rows if _usable(r.get("low"))]
     row: Dict[str, Any] = {
-        "code": first.get("code"),
-        "name": last.get("name"),
+        "code": rows[0].get("code"),
+        "name": rows[-1].get("name"),
         "date": date,
-        "open": first.get("open"),
-        "close": last.get("close"),
-        "high": max(r["high"] for r in rows if r.get("high") is not None),
-        "low": min(r["low"] for r in rows if r.get("low") is not None),
+        "open": opens[0] if opens else None,
+        "close": closes[-1] if closes else None,
+        "high": max(highs) if highs else None,
+        "low": min(lows) if lows else None,
         "volume": sum(r.get("volume", 0) for r in rows),
         "amount": sum(r.get("amount", 0.0) for r in rows),
         "pre_close": prev_close,
@@ -67,7 +86,7 @@ def resample_minutes(rows: List[Dict[str, Any]], n: int) -> List[Dict[str, Any]]
     buckets: Dict[Tuple[int, int], List[Dict[str, Any]]] = {}
     for r in rows:
         ts = r.get("date")
-        if not isinstance(ts, int):
+        if not isinstance(ts, int) or not _priced(r):
             continue
         day, clock = divmod(ts // 100, 10000)
         traded = _to_traded(clock // 100 * 60 + clock % 100)
@@ -90,6 +109,8 @@ def resample_daily(rows: List[Dict[str, Any]], freq: str) -> List[Dict[str, Any]
     """把升序日 K 行合并为周线（``1w``）或月线（``1M``）。"""
     groups: Dict[Tuple[int, int], List[Dict[str, Any]]] = {}
     for r in rows:
+        if not _priced(r):
+            continue
         try:
             day = _dt.datetime.strptime(str(r.get("date"))[:8], "%Y%m%d")
         except ValueError:

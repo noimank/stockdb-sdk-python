@@ -13,6 +13,20 @@ def _m(ts, o, c, h, l, v=100):
             "pre_close": o}
 
 
+def _susp(ts):
+    """停牌占位 bar 形态一：OHLC 全 None、volume=0（服务端分钟表实测形态）。"""
+    return {"code": "600633", "date": ts, "open": None, "close": None,
+            "high": None, "low": None, "volume": 0, "amount": 0.0,
+            "pre_close": None}
+
+
+def _susp0(ts):
+    """停牌占位 bar 形态二：OHLC 全 0、volume=0、pre_close=None。"""
+    return {"code": "600633", "date": ts, "open": 0, "close": 0,
+            "high": 0, "low": 0, "volume": 0, "amount": 0.0,
+            "pre_close": None}
+
+
 class TestMinute:
     def test_5m_basic(self):
         rows = [_m(_ts(20260625, 930 + i), 10, 10 + i, 11, 9) for i in range(5)]
@@ -67,6 +81,36 @@ class TestMinute:
         assert out[1]["pre_close"] == out[0]["close"]
         assert out[1]["pct_chg"] == 0.0
 
+    def test_placeholder_rows_dropped(self):
+        # 同桶内混入两种停牌占位形态：均不参与 open/close/high/low/volume 合并
+        rows = ([_susp(_ts(20260625, 930 + i)) for i in range(2)]
+                + [_susp0(_ts(20260625, 932))]
+                + [_m(_ts(20260625, 933 + i), 10 + i, 12 + i, 13, 9)
+                   for i in range(2)])
+        out = resample_minutes(rows, 5)
+        assert len(out) == 1
+        assert out[0]["open"] == 10 and out[0]["close"] == 13
+        assert out[0]["high"] == 13 and out[0]["low"] == 9
+        assert out[0]["volume"] == 200
+
+    def test_all_placeholder_bucket_dropped(self):
+        # 整个 5m 桶全为占位 bar（None / 0 两种形态混布）：整桶不输出
+        rows = ([_m(_ts(20260625, 930 + i), 10, 10, 10, 10) for i in range(5)]
+                + [_susp(_ts(20260625, 935 + i)) for i in range(3)]
+                + [_susp0(_ts(20260625, 938 + i)) for i in range(2)])
+        out = resample_minutes(rows, 5)
+        assert [b["date"] for b in out] == [_ts(20260625, 930)]
+        assert out[0]["volume"] == 500
+
+    def test_partial_none_fields_no_crash(self):
+        # 部分价格字段缺失（非占位行）：不再因 max()/min() 空序列崩溃
+        rows = [_m(_ts(20260625, 930 + i), 10, 10 + i, None, None)
+                for i in range(5)]
+        out = resample_minutes(rows, 5)
+        assert len(out) == 1
+        assert out[0]["high"] is None and out[0]["low"] is None
+        assert out[0]["open"] == 10 and out[0]["close"] == 14
+
 
 class TestDaily:
     def test_weekly(self):
@@ -94,3 +138,13 @@ class TestDaily:
                 (20241230, 20241231, 20250102)]
         out = resample_daily(rows, "1w")
         assert len(out) == 1
+
+    def test_suspended_days_dropped(self):
+        # 周内停牌占位日（OHLC 全 None 或全 0）不参与周线合并
+        rows = ([_m(20260803, 10, 11, 12, 9)]
+                + [_susp(20260804), _susp0(20260805)]
+                + [_m(20260806, 13, 14, 15, 8)])
+        out = resample_daily(rows, "1w")
+        assert len(out) == 1
+        assert out[0]["open"] == 10 and out[0]["close"] == 14
+        assert out[0]["volume"] == 200

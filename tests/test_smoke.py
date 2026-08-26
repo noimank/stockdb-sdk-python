@@ -4,7 +4,7 @@ import stockdb_sdk as sdk
 
 
 def test_version():
-    assert sdk.__version__ == "0.3.0"
+    assert sdk.__version__ == "0.3.1"
 
 
 def test_public_surface():

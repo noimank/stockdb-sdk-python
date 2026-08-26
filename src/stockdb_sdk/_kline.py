@@ -89,12 +89,12 @@ async def _afetch_rows(code: Optional[str], lo: Optional[str],
 
 
 def _universe() -> List[str]:
-    """在市 + 退市代码全集（前缀枚举用，两个小请求，不缓存）。"""
+    """在市 + 退市代码全集（前缀枚举用，两个小请求，不缓存，已去重）。"""
     table = _transport.fetch("get", t="股票代码")
     codes = [c for group in table.values() for c in group]
     codes += [c for c in _transport.fetch("vals", t="退市*")
               if isinstance(c, str)]
-    return codes
+    return list(dict.fromkeys(codes))
 
 
 async def _auniverse() -> List[str]:

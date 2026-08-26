@@ -28,7 +28,7 @@ from ._rd import rd
 from ._transport import DEFAULT_HOST, DEFAULT_PORT
 from ._transport import init as _init_transport
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 __all__ = [
     "init",
@@ -60,5 +60,6 @@ def codes() -> List[str]:
 
 
 def delisted() -> List[str]:
-    """已退市股票代码（升序）。"""
-    return sorted(_transport.fetch("vals", t="退市*"))
+    """已退市股票代码（升序，去重——服务端退市表存在同一代码多行）。"""
+    return sorted({c for c in _transport.fetch("vals", t="退市*")
+                   if isinstance(c, str)})

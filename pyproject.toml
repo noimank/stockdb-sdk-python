@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stockdb-sdk"
-version = "0.3.0"
+version = "0.3.1"
 description = "free-stockdb 项目的第三方只读 SDK：K 线查询（多周期/复权/字段投影）、板块检索，纯 HTTP 跨平台实现"
 readme = "README.md"
 requires-python = ">=3.10"
