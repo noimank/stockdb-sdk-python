@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -27,7 +27,7 @@ jobs:
       - name: Smoke test (import)
         shell: pwsh
         run: |
-          $wheels = Get-ChildItem dist\*.whl
+          $wheels = Get-ChildItem dist/*.whl
           pip install $wheels.FullName
           python -c "import stockdb_sdk as sdk; print(sdk.__version__)"
 

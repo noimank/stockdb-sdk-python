@@ -4,9 +4,6 @@ __pycache__/
 *.pyo
 *$py.class
 
-# 原生扩展二进制随源码一并提交（.pyd 不能忽略）
-# *.pyd
-
 # Distribution / packaging
 build/
 dist/

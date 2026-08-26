@@ -1,18 +1,18 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "stockdb-sdk"
-version = "0.2.1"
-description = "free-stockdb 项目的第三方 Python SDK：K 线查询、板块检索与技术指标计算"
+version = "0.3.0"
+description = "free-stockdb 项目的第三方只读 SDK：K 线查询（多周期/复权/字段投影）、板块检索，纯 HTTP 跨平台实现"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Proprietary" }
 authors = [
     { name = "noimank", email = "noimank@163.com" },
 ]
-keywords = ["stock", "finance", "kline", "indicator", "quant", "stockdb"]
+keywords = ["stock", "finance", "kline", "quant", "stockdb"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -22,15 +22,16 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "Operating System :: Microsoft :: Windows",
+    "Operating System :: OS Independent",
     "Topic :: Office/Business :: Financial :: Investment",
 ]
 dependencies = [
+    "httpx>=0.24",
     "pandas>=1.3",
 ]
 
 [project.optional-dependencies]
-dev = ["build", "wheel", "pytest", "twine"]
+dev = ["build", "pytest", "twine"]
 
 [project.urls]
 Homepage = "https://github.com/hello245m/free-stockdb"
@@ -39,11 +40,6 @@ Source = "https://github.com/noimank/stockdb-sdk-python"
 [tool.setuptools]
 package-dir = { "" = "src" }
 packages = ["stockdb_sdk"]
-
-# 原生二进制扩展模块（.pyd）。setuptools 会依据它们的加载行为
-# 自动将产物打为平台相关 wheel（win_amd64），而非纯 Python wheel。
-[tool.setuptools.package-data]
-stockdb_sdk = ["*.pyd"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

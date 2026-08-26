@@ -1,54 +1,64 @@
-"""StockDB Python SDK.
+"""StockDB Python SDK —— 基于 HTTP 的跨平台只读行情接口。
 
-针对 free-stockdb（https://github.com/hello245m/free-stockdb）项目的第三方
-Python SDK，提供：
-
-* 统一的高层 ``get_data`` / ``get_data_async`` 接口：日 K / 分钟 K / 周 K /
-  月 K 查询，支持多股票批量、复权、字段投影与 DataFrame 输出。
-* 技术指标计算（:func:`indicator`）与自定义指数合成（:func:`index`），
-  由原生 :mod:`stockdb_sdk.zb_core` 加速。
-* 板块（概念 / 申万行业）检索（:data:`bk`）。
-* 原生 K-V 接口的类型化门面（:class:`RdClient`，经 :data:`rd` 使用），
-  全部 13 个方法均带显式签名与完整语义文档。
-
-所有公开接口均为显式参数签名（无 ``*args`` / ``**kwargs``），IDE 补全、
-``help()`` 与静态检查开箱可用。股票代码使用 6 位裸代码（如 ``"000001"``）；
-带交易所后缀的写法（如 ``"000001.SZ"``）会被自动归一化。
+针对 free-stockdb（https://github.com/hello245m/free-stockdb）本地数据库
+的第三方只读 SDK：K 线查询（日 / 周 / 月 / 1-60 分钟、前/后复权、字段
+投影、DataFrame 输出）、股票与板块（概念 / 申万行业）双向检索，以及原生
+三级键只读门面。纯 Python 实现，Windows / macOS / Linux 通用，只需本地
+（或局域网内）运行着 stockdb 服务。
 
 典型用法::
 
     import stockdb_sdk as sdk
 
-    sdk.init(host="127.0.0.1", port=7899)  # 默认端点，本机可省略
+    sdk.init(host="127.0.0.1", port=7899)   # 默认端点，本机可省略
 
-    bars = sdk.get_data("000001", start="20260701", end="20260824")
-    codes = sdk.rd.vals("退市*")            # 原生 K-V 读取
+    rows = sdk.get("600633", start="20260701", end="20260824")
+    df = sdk.get(["600633", "000001"], freq="5m", as_df=True)
+    boards = sdk.boards("600633")           # 该股所属板块
+    members = sdk.members("AI芯片")         # 板块成员代码
 """
 
-from . import stockdb
-from . import zb_core
-from ._board import BoardIndex, bk
-from ._client import StockDBClient
-from ._default import get_data, get_data_async, init, rd
-from ._indicator import index, indicator
-from ._raw import Pipeline, RdClient, StockdbError
+from typing import List
 
-__version__ = "0.2.1"
+from . import _transport
+from ._boards import boards, members
+from ._boards import reset as _reset_boards
+from ._kline import get, get_async
+from ._rd import rd
+from ._transport import DEFAULT_HOST, DEFAULT_PORT
+from ._transport import init as _init_transport
+
+__version__ = "0.3.0"
 
 __all__ = [
     "init",
-    "StockDBClient",
-    "RdClient",
-    "Pipeline",
-    "StockdbError",
-    "BoardIndex",
-    "get_data",
-    "get_data_async",
-    "indicator",
-    "index",
-    "bk",
+    "get",
+    "get_async",
+    "codes",
+    "delisted",
+    "boards",
+    "members",
     "rd",
-    "stockdb",
-    "zb_core",
     "__version__",
 ]
+
+
+def init(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> None:
+    """配置服务端点（默认 ``http://127.0.0.1:7899``，本机可省略）。
+
+    切换端点会重建连接并清空板块索引；行情与复权因子均为按调用
+    取用，无跨调用状态需要清理。
+    """
+    _init_transport(host, port)
+    _reset_boards()
+
+
+def codes() -> List[str]:
+    """全部在市股票代码（升序）。"""
+    table = _transport.fetch("get", t="股票代码")
+    return sorted(code for group in table.values() for code in group)
+
+
+def delisted() -> List[str]:
+    """已退市股票代码（升序）。"""
+    return sorted(_transport.fetch("vals", t="退市*"))

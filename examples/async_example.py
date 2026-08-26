@@ -1,4 +1,4 @@
-"""示例：异步 K 线查询。"""
+"""异步查询：协程内并发拉取多只股票。"""
 
 import asyncio
 
@@ -6,13 +6,16 @@ import stockdb_sdk as sdk
 
 
 async def main():
-    sdk.init(host="127.0.0.1", port=7899)
+    # 单只
+    rows = await sdk.get_async("600633", start="20260701", end="20260824")
+    print(f"600633 日K {len(rows)} 根")
 
-    bars = await sdk.get_data_async("000001", start="20260801", end="20260824")
-    print("异步日 K 前 3 条：")
-    for b in bars[:3]:
-        print(" ", b)
+    # 列表并发请求；前缀 "*" 为全市场单请求后客户端过滤
+    data = await sdk.get_async(
+        ["600633", "000001", "300750", "688981"],
+        start="20260818", end="20260824", fq=None)
+    for code, bars in sorted(data.items()):
+        print(f"{code}: 最新收盘 {bars[-1]['close']}")
 
 
-if __name__ == "__main__":
-    asyncio.run(main())
+asyncio.run(main())
